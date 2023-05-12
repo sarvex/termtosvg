@@ -29,17 +29,19 @@ def validate_geometry(screen_geometry):
     """Raise ValueError if 'screen_geometry' does not conform to <integer>x<integer> format"""
     columns, rows = [int(value) for value in screen_geometry.lower().split('x')]
     if columns <= 0 or rows <= 0:
-        raise ValueError('Invalid value for screen-geometry option: "{}"'.format(screen_geometry))
+        raise ValueError(
+            f'Invalid value for screen-geometry option: "{screen_geometry}"'
+        )
     return columns, rows
 
 
 def default_templates():
     """Return mapping between the name of a template and the SVG template itself"""
     templates = {}
+    suffix = '.svg'
     for template_name in DEFAULT_TEMPLATES_NAMES:
-        pkg_template_path = '{}/{}'.format(PKG_TEMPLATE_PATH, template_name)
+        pkg_template_path = f'{PKG_TEMPLATE_PATH}/{template_name}'
         bstream = pkgutil.get_data(__name__, pkg_template_path)
-        suffix = '.svg'
         if template_name.endswith(suffix):
             templates[template_name[:-len(suffix)]] = bstream
         else:

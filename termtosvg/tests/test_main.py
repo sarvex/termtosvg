@@ -95,7 +95,7 @@ class TestMain(unittest.TestCase):
 
     def test_main(self):
         _, cast_filename = tempfile.mkstemp(prefix='termtosvg_', suffix='.cast')
-        svg_filename = cast_filename[:-5] + '.svg'
+        svg_filename = f'{cast_filename[:-5]}.svg'
 
         with self.subTest(case='record (no filename)'):
             args = ['termtosvg', 'record']
@@ -157,7 +157,7 @@ class TestMain(unittest.TestCase):
             TestMain.run_main(args, SHELL_INPUT)
 
         for template in termtosvg.config.default_templates():
-            with self.subTest(case='record and render on the fly ({} template)'.format(template)):
+            with self.subTest(case=f'record and render on the fly ({template} template)'):
                 args = ['termtosvg', '-t', template]
                 TestMain.run_main(args, SHELL_INPUT)
 

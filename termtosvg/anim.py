@@ -15,7 +15,7 @@ from wcwidth import wcswidth
 # can be styled with themes) from FG_BG_256[16] (which is also black #000000
 # but should be displayed as is).
 _COLORS = ['black', 'red', 'green', 'brown', 'blue', 'magenta', 'cyan', 'white']
-_BRIGHTCOLORS = ['bright{}'.format(color) for color in _COLORS]
+_BRIGHTCOLORS = [f'bright{color}' for color in _COLORS]
 NAMED_COLORS = _COLORS + _BRIGHTCOLORS
 pyte.graphics.FG_BG_256 = NAMED_COLORS + pyte.graphics.FG_BG_256[16:]
 
@@ -81,29 +81,29 @@ class CharacterCell(_CharacterCell):
             text_color = 'foreground'
         else:
             if char.bold and not str(char.fg).startswith('bright'):
-                named_color = 'bright{}'.format(char.fg)
+                named_color = f'bright{char.fg}'
             else:
                 named_color = char.fg
 
             if named_color in NAMED_COLORS:
-                text_color = 'color{}'.format(NAMED_COLORS.index(named_color))
+                text_color = f'color{NAMED_COLORS.index(named_color)}'
             elif len(char.fg) == 6:
                 # HEXADECIMAL COLORS
                 # raise ValueError if char.fg is not an hexadecimal number
                 int(char.fg, 16)
-                text_color = '#{}'.format(char.fg)
+                text_color = f'#{char.fg}'
             else:
-                raise ValueError('Invalid foreground color: {}'.format(char.fg))
+                raise ValueError(f'Invalid foreground color: {char.fg}')
 
         if char.bg == 'default':
             background_color = 'background'
         elif char.bg in NAMED_COLORS:
-            background_color = 'color{}'.format(NAMED_COLORS.index(char.bg))
+            background_color = f'color{NAMED_COLORS.index(char.bg)}'
         elif len(char.bg) == 6:
             # Hexadecimal colors
             # raise ValueError if char.bg is not an hexadecimal number
             int(char.bg, 16)
-            background_color = '#{}'.format(char.bg)
+            background_color = f'#{char.bg}'
         else:
             raise ValueError('Invalid background color')
 
@@ -221,7 +221,7 @@ def _render_animation(screen_height, frames, root, cell_width, cell_height):
         screen_view.append(frame_group)
         animation_duration = frame.time + frame.duration
         timings[frame.time] = -offset
-        definitions.update(frame_definitions)
+        definitions |= frame_definitions
 
     tree_defs = etree.SubElement(svg_screen_tag, 'defs')
     for definition in definitions.values():
@@ -249,8 +249,9 @@ def _add_animation(root, timings, animation_duration):
 
     f = animators.get(animation.attrib['type'].lower())
     if f is None:
-        raise TemplateError("Attribute 'type' of element 'animation' must be one of {}"
-                            .format(', '.join(animators.keys())))
+        raise TemplateError(
+            f"Attribute 'type' of element 'animation' must be one of {', '.join(animators.keys())}"
+        )
 
     f(root, timings, animation_duration)
 
@@ -278,7 +279,7 @@ def _render_timed_frame(offset, buffer, cell_height, cell_width, definitions):
                                                  current_definitions)
             for tag in tags:
                 frame_group_tag.append(tag)
-            group_definitions.update(new_definitions)
+            group_definitions |= new_definitions
 
     return frame_group_tag, group_definitions
 
@@ -301,14 +302,14 @@ def _render_line(offset, row_number, row, cell_height, cell_width, definitions):
         group_id = definitions[text_group_tag_str].attrib['id']
         new_definitions = {}
     else:
-        group_id = 'g{}'.format(len(definitions) + 1)
+        group_id = f'g{len(definitions) + 1}'
         assert group_id not in definitions.values()
         text_group_tag.attrib['id'] = group_id
         new_definitions = {text_group_tag_str: text_group_tag}
 
     # Add a reference to the definition of text_group_tag with a 'use' tag
     use_attributes = {
-        '{{{}}}href'.format(XLINK_NS): '#{}'.format(group_id),
+        '{{{}}}href'.format(XLINK_NS): f'#{group_id}',
         'y': str(offset + row_number * cell_height),
     }
     tags.append(etree.Element('use', use_attributes))
@@ -328,8 +329,7 @@ def _make_rect_tag(column, length, height, cell_width, cell_height, background_c
         attributes['fill'] = background_color
     else:
         attributes['class'] = background_color
-    rect_tag = etree.Element('rect', attributes)
-    return rect_tag
+    return etree.Element('rect', attributes)
 
 
 def _render_line_bg_colors(screen_line, height, cell_height, cell_width):
@@ -350,17 +350,17 @@ def _render_line_bg_colors(screen_line, height, cell_height, cell_width):
                             if cell.background_color != 'background']
 
     key = ConsecutiveWithSameAttributes(['background_color'])
-    rect_tags = [
+    return [
         _make_rect_tag(
             column,
             wcswidth(''.join(t[1].text for t in group)),
             height,
             cell_width,
             cell_height,
-            attributes['background_color']
-        ) for (column, attributes), group in groupby(non_default_bg_cells, key)]
-
-    return rect_tags
+            attributes['background_color'],
+        )
+        for (column, attributes), group in groupby(non_default_bg_cells, key)
+    ]
 
 
 def _make_text_tag(column, attributes, text, cell_width):
@@ -375,9 +375,7 @@ def _make_text_tag(column, attributes, text, cell_width):
     if attributes['italics']:
         text_tag_attributes['font-style'] = 'italic'
 
-    decoration = ''
-    if attributes['underscore']:
-        decoration = 'underline'
+    decoration = 'underline' if attributes['underscore'] else ''
     if attributes['strikethrough']:
         decoration += ' line-through'
     if decoration:
@@ -404,10 +402,12 @@ def _render_characters(screen_line, cell_width):
     """
     line = sorted(screen_line.items())
     key = ConsecutiveWithSameAttributes(['color', 'bold', 'italics', 'underscore', 'strikethrough'])
-    text_tags = [_make_text_tag(column, attributes, ''.join(c.text for _, c in group), cell_width)
-                 for (column, attributes), group in groupby(line, key)]
-
-    return text_tags
+    return [
+        _make_text_tag(
+            column, attributes, ''.join(c.text for _, c in group), cell_width
+        )
+        for (column, attributes), group in groupby(line, key)
+    ]
 
 
 def resize_template(template, geometry, cell_width, cell_height):
@@ -643,8 +643,8 @@ def _embed_waapi(root, timings=None, animation_duration=None):
                 iterations: Infinity
             }}
         }};""".format(
-            transforms=',{}'.format(os.linesep).join(transforms),
-            duration=animation_duration
+            transforms=f',{os.linesep}'.join(transforms),
+            duration=animation_duration,
         )
 
         script_element.text = etree.CDATA(js_animation)
@@ -671,4 +671,4 @@ def validate_svg(svg_file):
 
     if not is_valid:
         reason = dtd.error_log.filter_from_errors()[0]
-        raise ValueError('Invalid SVG file: {}'.format(reason))
+        raise ValueError(f'Invalid SVG file: {reason}')

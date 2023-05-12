@@ -61,17 +61,16 @@ def parse(args, templates, default_template, default_geometry, default_min_dur,
     # https://stackoverflow.com/questions/15405636/pythons-argparse-to-show-programs-version-with-prog-and-version-string-formatt
     # https://stackoverflow.com/questions/2058802/how-can-i-get-the-version-defined-in-setup-py-setuptools-in-my-package
     command_parser.add_argument(
-        '-v', '--version',
+        '-v',
+        '--version',
         action='version',
-        version='%(prog)s {}'.format(
-            pkg_resources.require('termtosvg')[0].version
-        )
+        version=f"%(prog)s {pkg_resources.require('termtosvg')[0].version}",
     )
 
     command_parser.add_argument(
-        '-c', '--command',
-        help=(('specify the program to record with optional arguments '
-               '(default: {})').format(default_cmd)),
+        '-c',
+        '--command',
+        help=f'specify the program to record with optional arguments (default: {default_cmd})',
         default=default_cmd,
         metavar='COMMAND',
     )
@@ -85,13 +84,12 @@ def parse(args, templates, default_template, default_geometry, default_min_dur,
 
     template_parser = argparse.ArgumentParser(add_help=False)
     template_parser.add_argument(
-        '-t', '--template',
-        help=('set the SVG template used for rendering the SVG animation. '
-              'TEMPLATE may either be one of the default templates ({}) '
-              'or a path to a valid template.').format(', '.join(templates)),
+        '-t',
+        '--template',
+        help=f"set the SVG template used for rendering the SVG animation. TEMPLATE may either be one of the default templates ({', '.join(templates)}) or a path to a valid template.",
         type=lambda name: termtosvg.anim.validate_template(name, templates),
         default=default_template,
-        metavar='TEMPLATE'
+        metavar='TEMPLATE',
     )
     geometry_parser = argparse.ArgumentParser(add_help=False)
     geometry_parser.add_argument(
@@ -106,38 +104,37 @@ def parse(args, templates, default_template, default_geometry, default_min_dur,
     )
     min_duration_parser = argparse.ArgumentParser(add_help=False)
     min_duration_parser.add_argument(
-        '-m', '--min-frame-duration',
+        '-m',
+        '--min-frame-duration',
         type=integral_duration_validation,
         metavar='MIN_DURATION',
         default=default_min_dur,
-        help=('minimum duration of a frame in milliseconds (default: {}ms)'
-              .format(default_min_dur))
+        help=f'minimum duration of a frame in milliseconds (default: {default_min_dur}ms)',
     )
 
     if default_max_dur:
-        default_max_dur_label = '{}ms'.format(default_max_dur)
+        default_max_dur_label = f'{default_max_dur}ms'
     else:
         default_max_dur_label = 'No maximum value'
 
     max_duration_parser = argparse.ArgumentParser(add_help=False)
     max_duration_parser.add_argument(
-        '-M', '--max-frame-duration',
+        '-M',
+        '--max-frame-duration',
         type=integral_duration_validation,
         metavar='MAX_DURATION',
         default=default_max_dur,
-        help=('maximum duration of a frame in milliseconds (default: {})'
-              .format(default_max_dur_label))
+        help=f'maximum duration of a frame in milliseconds (default: {default_max_dur_label})',
     )
 
     loop_delay_parser = argparse.ArgumentParser(add_help=False)
     loop_delay_parser.add_argument(
-        '-D', '--loop-delay',
+        '-D',
+        '--loop-delay',
         type=integral_duration_validation,
         metavar='DELAY',
         default=default_loop_delay,
-        help=(('duration in milliseconds of the pause between two consecutive '
-               'loops of the animation (default: {}ms)')
-              .format(default_loop_delay))
+        help=f'duration in milliseconds of the pause between two consecutive loops of the animation (default: {default_loop_delay}ms)',
     )
 
     parser = argparse.ArgumentParser(
@@ -215,7 +212,7 @@ def record_subcommand(process_args, geometry, input_fileno, output_fileno,
         with open(cast_filename, 'w') as cast_file:
             for record_ in records:
                 print(record_.to_json_line(), file=cast_file)
-    logger.info('Recording ended, cast file is {}'.format(cast_filename))
+    logger.info(f'Recording ended, cast file is {cast_filename}')
 
 
 def render_subcommand(still, template, cast_filename, output_path,
@@ -233,14 +230,13 @@ def render_subcommand(still, template, cast_filename, output_path,
                                            geometry=geometry,
                                            directory=output_path,
                                            template=template)
-        logger.info('Rendering ended, SVG frames are located at {}'
-                    .format(output_path))
+        logger.info(f'Rendering ended, SVG frames are located at {output_path}')
     else:
         termtosvg.anim.render_animation(frames=frames,
                                         geometry=geometry,
                                         filename=output_path,
                                         template=template)
-        logger.info('Rendering ended, SVG animation is {}'.format(output_path))
+        logger.info(f'Rendering ended, SVG animation is {output_path}')
 
 
 def record_render_subcommand(process_args, still, template, geometry,

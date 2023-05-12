@@ -62,7 +62,7 @@ class TestAsciicast(unittest.TestCase):
     def test_from_json(self):
         test_cases = zip(TestAsciicast.cast_v2_lines, TestAsciicast.cast_v2_events)
         for index, (line, event) in enumerate(test_cases):
-            with self.subTest(case='line #{}'.format(index)):
+            with self.subTest(case=f'line #{index}'):
                 self.assertEqual(event, AsciiCastV2Record.from_json_line(line))
 
         failure_test_cases = [
@@ -87,7 +87,7 @@ class TestAsciicast(unittest.TestCase):
             # extra value test case only useful for from_json
             if 'timestamp' in line:
                 continue
-            with self.subTest(case='record #{}'.format(index)):
+            with self.subTest(case=f'record #{index}'):
                 self.assertEqual(event.to_json_line(), line)
 
     cast_v1_lines = '\r\n'.join(['{',
@@ -118,7 +118,7 @@ class TestAsciicast(unittest.TestCase):
                          TestAsciicast.cast_v1_events,
                          _read_v1_records(TestAsciicast.cast_v1_lines))
         for index, (line, expected_event, event) in enumerate(test_cases):
-            with self.subTest(case='record #{}'.format(index)):
+            with self.subTest(case=f'record #{index}'):
                 if isinstance(event, AsciiCastV2Header):
                     self.assertEqual(event, expected_event)
                 elif isinstance(event, AsciiCastV2Event):

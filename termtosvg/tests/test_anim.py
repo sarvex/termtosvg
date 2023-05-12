@@ -16,10 +16,10 @@ TEMPLATE = pkgutil.get_data('termtosvg', '/data/templates/gjm8.svg')
 
 
 def line(i):
-    chars = []
-    for c in 'line{}'.format(i):
-        chars.append(anim.CharacterCell(c, '#123456', '#789012',
-                                        False, False, False, False))
+    chars = [
+        anim.CharacterCell(c, '#123456', '#789012', False, False, False, False)
+        for c in f'line{i}'
+    ]
     return dict(enumerate(chars))
 
 
@@ -205,7 +205,7 @@ class TestAnim(unittest.TestCase):
                                                        cell_width=8,
                                                        cell_height=17,
                                                        definitions={})
-            all_definitions.update(new_defs)
+            all_definitions |= new_defs
 
         assert(len(all_definitions) == 4)
 
@@ -230,7 +230,7 @@ class TestAnim(unittest.TestCase):
 
     def test__render_still_frames(self):
         def line(s):
-            return dict(enumerate([anim.CharacterCell(c) for c in s]))
+            return dict(enumerate(anim.CharacterCell(c) for c in s))
 
         frames = [
             term.TimedFrame(0, 0, {

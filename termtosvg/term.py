@@ -105,9 +105,7 @@ def _record(process_args, columns, lines, input_fileno, output_fileno):
     except tty.error:
         pass
 
-    for data, time in _capture_output(input_fileno, output_fileno, master_fd):
-        yield data, time
-
+    yield from _capture_output(input_fileno, output_fileno, master_fd)
     os.close(master_fd)
 
     _, child_exit_status = os.waitpid(pid, 0)
@@ -188,25 +186,26 @@ def _group_by_time(event_records, min_rec_duration, max_rec_duration, last_rec_d
 
         time_between_events = event_record.time - (current_time + dropped_time)
         if time_between_events * 1000 >= min_rec_duration:
-            if max_rec_duration:
-                if max_rec_duration < time_between_events:
-                    dropped_time += time_between_events - max_rec_duration
-                    time_between_events = max_rec_duration
-            accumulator_event = AsciiCastV2Event(time=current_time,
-                                                 event_type='o',
-                                                 event_data=current_string,
-                                                 duration=time_between_events)
-            yield accumulator_event
+            if max_rec_duration and max_rec_duration < time_between_events:
+                dropped_time += time_between_events - max_rec_duration
+                time_between_events = max_rec_duration
+            yield AsciiCastV2Event(
+                time=current_time,
+                event_type='o',
+                event_data=current_string,
+                duration=time_between_events,
+            )
             current_string = ''
             current_time += time_between_events
 
         current_string += event_record.event_data
 
-    accumulator_event = AsciiCastV2Event(time=current_time,
-                                         event_type='o',
-                                         event_data=current_string,
-                                         duration=last_rec_duration / 1000)
-    yield accumulator_event
+    yield AsciiCastV2Event(
+        time=current_time,
+        event_type='o',
+        event_data=current_string,
+        duration=last_rec_duration / 1000,
+    )
 
 
 def record(process_args, columns, lines, input_fileno, output_fileno):
